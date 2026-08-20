@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% set active_page = 'settings' %}
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+
+<div style="max-width:600px;display:flex;flex-direction:column;gap:20px;">
+
+  {% if saved %}
+  <div class="card stagger-in" style="--i:0;padding:16px 20px;border-left:4px solid var(--mint);display:flex;align-items:center;gap:10px;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--mint)" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg>
+    <span style="font-size:13.5px;font-weight:500;">Settings saved successfully.</span>
+  </div>
+  {% endif %}
+
+  <!-- Appearance -->
+  <div class="card stagger-in" style="--i:1;padding:26px;">
+    <h3 style="font-size:15px;margin-bottom:4px;">Appearance</h3>
+    <p class="text-muted" style="font-size:13px;margin-bottom:18px;">Choose how LibraryOS looks on your device.</p>
+    <div class="flex items-center justify-between" style="padding:14px 16px;background:var(--bg);border-radius:var(--radius-md);">
+      <div class="flex items-center gap-12">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
+        <span style="font-size:13.5px;">Light / Dark Mode</span>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()">
+        <span class="theme-toggle-knob">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="5"/></svg>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Profile + Library settings form -->
+  <form method="POST" action="{{ url_for('settings_page') }}" id="settings-form">
+    <div class="card stagger-in" style="--i:2;padding:26px;margin-bottom:20px;">
+      <h3 style="font-size:15px;margin-bottom:4px;">Profile</h3>
+      <p class="text-muted" style="font-size:13px;margin-bottom:18px;">Your admin display name and password.</p>
+
+      <div class="form-group">
+        <input type="text" name="admin_display_name" id="admin_display_name" class="form-input" placeholder=" " value="{{ admin_name }}" required>
+        <label class="form-label">Admin Name</label>
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <input type="password" name="new_password" class="form-input" placeholder=" " autocomplete="new-password">
+        <label class="form-label">New Password (leave blank to keep current)</label>
+      </div>
+    </div>
+
+    <div class="card stagger-in" style="--i:3;padding:26px;margin-bottom:20px;">
+      <h3 style="font-size:15px;margin-bottom:4px;">Library Settings</h3>
+      <p class="text-muted" style="font-size:13px;margin-bottom:18px;">Configure borrowing rules for your library.</p>
+
+      <div class="form-group">
+        <input type="text" name="library_name" id="library_name" class="form-input" placeholder=" " value="{{ library_name }}" required>
+        <label class="form-label">Library Name</label>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <input type="number" name="borrow_period_days" id="borrow_period_days" class="form-input" placeholder=" " value="{{ borrow_period_days }}" min="1" required>
+          <label class="form-label">Borrow Period (days)</label>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <input type="number" name="fine_per_day" id="fine_per_day" class="form-input" placeholder=" " value="{{ fine_per_day }}" min="0" required>
+          <label class="form-label">Fine per Day (₹)</label>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary" id="settings-submit-btn">
+      <span class="btn-label">Save Settings</span>
+      <span class="spinner"></span>
+    </button>
+  </form>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.getElementById('settings-form').addEventListener('submit', function () {
+    setBtnLoading(document.getElementById('settings-submit-btn'), true);
+  });
+</script>
+{% endblock %}

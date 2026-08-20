@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% set active_page = 'reports' %}
+{% block page_title %}Reports{% endblock %}
+
+{% block content %}
+
+<div class="flex items-center justify-between" style="margin-bottom:22px;">
+  <p class="text-secondary" style="font-size:13.5px;">A snapshot of your library's activity and performance.</p>
+  <a href="{{ url_for('reports_export') }}" class="btn btn-secondary">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+    Export CSV
+  </a>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px;">
+  <div class="card stagger-in" style="--i:0;padding:20px;">
+    <div class="text-muted" style="font-size:12px;">Total Books</div>
+    <div style="font-family:var(--font-display);font-size:24px;font-weight:700;margin-top:4px;">{{ total_books }}</div>
+  </div>
+  <div class="card stagger-in" style="--i:1;padding:20px;">
+    <div class="text-muted" style="font-size:12px;">Total Students</div>
+    <div style="font-family:var(--font-display);font-size:24px;font-weight:700;margin-top:4px;">{{ total_students }}</div>
+  </div>
+  <div class="card stagger-in" style="--i:2;padding:20px;">
+    <div class="text-muted" style="font-size:12px;">Issued Books</div>
+    <div style="font-family:var(--font-display);font-size:24px;font-weight:700;margin-top:4px;">{{ issued_books }}</div>
+  </div>
+  <div class="card stagger-in" style="--i:3;padding:20px;">
+    <div class="text-muted" style="font-size:12px;">Returned</div>
+    <div style="font-family:var(--font-display);font-size:24px;font-weight:700;margin-top:4px;">{{ returned_count }}</div>
+  </div>
+  <div class="card stagger-in" style="--i:4;padding:20px;">
+    <div class="text-muted" style="font-size:12px;">Overdue</div>
+    <div style="font-family:var(--font-display);font-size:24px;font-weight:700;margin-top:4px;color:{{ 'var(--coral)' if overdue_count > 0 else 'var(--text-primary)' }};">{{ overdue_count }}</div>
+  </div>
+  <div class="card stagger-in" style="--i:5;padding:20px;">
+    <div class="text-muted" style="font-size:12px;">Total Fine Collected</div>
+    <div style="font-family:var(--font-display);font-size:24px;font-weight:700;margin-top:4px;">₹{{ total_fine }}</div>
+  </div>
+</div>
+
+<div class="card stagger-in" style="--i:6;padding:24px;">
+  <h3 style="font-size:15px;margin-bottom:18px;">Books by Category</h3>
+  {% if category_stats %}
+  <div style="display:flex;flex-direction:column;gap:14px;">
+    {% set max_count = category_stats[0].book_count %}
+    {% for c in category_stats %}
+    <div>
+      <div class="flex items-center justify-between" style="margin-bottom:6px;font-size:13px;">
+        <span>{{ c.category }}</span>
+        <span class="text-muted">{{ c.book_count }} book{{ 's' if c.book_count != 1 else '' }}</span>
+      </div>
+      <div style="height:8px;background:var(--bg);border-radius:6px;overflow:hidden;">
+        <div style="height:100%;width:{{ (c.book_count / max_count * 100)|round(1) }}%;background:var(--grad-primary);border-radius:6px;transition:width 800ms var(--ease-smooth);"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>
+    </div>
+    <h3>No data yet</h3>
+    <p>Add books to see category statistics here.</p>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

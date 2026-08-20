@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Transactions{% endblock %}
+{% set active_page = 'transactions' %}
+{% block page_title %}Transaction History{% endblock %}
+
+{% block content %}
+
+<div class="flex items-center gap-8" style="margin-bottom:20px;flex-wrap:wrap;">
+  <button class="btn btn-secondary filter-btn active" data-status="all" onclick="setFilter('all', this)">All</button>
+  <button class="btn btn-secondary filter-btn" data-status="issued" onclick="setFilter('issued', this)">Issued</button>
+  <button class="btn btn-secondary filter-btn" data-status="returned" onclick="setFilter('returned', this)">Returned</button>
+  <button class="btn btn-secondary filter-btn" data-status="overdue" onclick="setFilter('overdue', this)">Overdue</button>
+</div>
+
+<div class="table-wrap card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Student</th>
+        <th>Book</th>
+        <th>Issue Date</th>
+        <th>Due Date</th>
+        <th>Return Date</th>
+        <th>Status</th>
+        <th>Fine</th>
+      </tr>
+    </thead>
+    <tbody id="txn-tbody"></tbody>
+  </table>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  let currentFilter = 'all';
+
+  function setFilter(status, btn) {
+    currentFilter = status;
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.classList.remove('active');
+      b.style.background = '';
+      b.style.color = '';
+      b.style.borderColor = '';
+    });
+    btn.classList.add('active');
+    btn.style.background = 'var(--grad-primary)';
+    btn.style.color = '#fff';
+    btn.style.borderColor = 'transparent';
+    loadTransactions();
+  }
+
+  function statusBadgeHtml(status) {
+    if (status === 'returned') return '<span class="badge badge-success"><span class="badge-dot"></span>Returned</span>';
+    if (status === 'overdue') return '<span class="badge badge-danger"><span class="badge-dot"></span>Overdue</span>';
+    return '<span class="badge badge-info"><span class="badge-dot"></span>Issued</span>';
+  }
+
+  function loadTransactions() {
+    fetch(`/api/transactions?status=${currentFilter}`)
+      .then(r => r.json())
+      .then(rows => {
+        const tbody = document.getElementById('txn-tbody');
+        if (!rows.length) {
+          tbody.innerHTML = `
+            <tr><td colspan="8">
+              <div class="empty-state">
+                <div class="empty-state-icon">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3l4 4-4 4"/><path d="M21 7H9"/><path d="M7 21l-4-4 4-4"/><path d="M3 17h12"/></svg>
+                </div>
+                <h3>No transactions found</h3>
+                <p>Try a different filter, or issue a book to get started.</p>
+              </div>
+            </td></tr>`;
+          return;
+        }
+        tbody.innerHTML = rows.map((t, i) => `
+          <tr class="row-in" style="--i:${i}">
+            <td class="font-mono text-muted" style="font-size:12px;">#${t.id}</td>
+            <td>
+              <div style="font-weight:600;font-size:13.5px;">${t.student_name}</div>
+              <div class="text-muted font-mono" style="font-size:11.5px;">${t.student_code}</div>
+            </td>
+            <td style="font-size:13.5px;">${t.book_title}</td>
+            <td style="font-size:13px;">${t.issue_date}</td>
+            <td style="font-size:13px;">${t.due_date}</td>
+            <td style="font-size:13px;">${t.return_date || '—'}</td>
+            <td>${statusBadgeHtml(t.display_status)}</td>
+            <td style="font-size:13px;${t.fine_amount > 0 ? 'color:var(--coral);font-weight:600;' : ''}">₹${t.fine_amount || 0}</td>
+          </tr>
+        `).join('');
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', loadTransactions);
+</script>
+{% endblock %}

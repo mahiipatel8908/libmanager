@@ -1,0 +1,100 @@
+/* =============================================================
+   animations.css — Keyframes & motion utilities
+   Library Management System
+   ============================================================= */
+
+/* ---------- Page entrance ---------- */
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-content {
+  animation: page-fade-in var(--dur-slow) var(--ease-smooth) both;
+}
+
+/* ---------- Staggered card entrance ---------- */
+@keyframes card-rise {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.stagger-in {
+  animation: card-rise var(--dur-slow) var(--ease-smooth) both;
+}
+/* Apply incremental delay via inline style --i on each element:
+   style="--i: 0" "--i: 1" etc. — see main.js applyStagger() */
+.stagger-in { animation-delay: calc(var(--i, 0) * 70ms); }
+
+/* ---------- Table row entrance ---------- */
+@keyframes row-slide-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.row-in {
+  animation: row-slide-in var(--dur-base) var(--ease-smooth) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+/* ---------- Spinner ---------- */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 0.8s linear infinite; }
+
+/* ---------- Toast slide-in ---------- */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(40px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes toast-out {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to   { opacity: 0; transform: translateX(40px) scale(0.95); }
+}
+.toast { animation: toast-in var(--dur-base) var(--ease-spring) both; }
+.toast.leaving { animation: toast-out var(--dur-fast) var(--ease-smooth) both; }
+
+/* ---------- Pulse (for live/notification dots) ---------- */
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+  70%  { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+.pulse { animation: pulse-ring 2s infinite; }
+
+/* ---------- Floating background shapes (login page) ---------- */
+@keyframes float-slow {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50%      { transform: translate(14px, -18px) rotate(6deg); }
+}
+@keyframes float-slower {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50%      { transform: translate(-18px, 14px) rotate(-8deg); }
+}
+.float-a { animation: float-slow 9s ease-in-out infinite; }
+.float-b { animation: float-slower 12s ease-in-out infinite; }
+.float-c { animation: float-slow 7s ease-in-out infinite reverse; }
+
+/* ---------- Skeleton loading shimmer ---------- */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--border) 25%, var(--border-strong) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ---------- Checkbox / toggle pop ---------- */
+@keyframes pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+.pop-in { animation: pop var(--dur-base) var(--ease-spring); }
+
+/* ---------- Number count-up helper class (JS toggles) ---------- */
+.count-up { font-variant-numeric: tabular-nums; }
+
+/* Respect reduced motion: kill the decorative-only ones outright */
+@media (prefers-reduced-motion: reduce) {
+  .float-a, .float-b, .float-c, .pulse, .shimmer, .skeleton { animation: none !important; }
+}

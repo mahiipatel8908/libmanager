@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}{{ student.name }}{% endblock %}
+{% set active_page = 'students' %}
+{% block page_title %}Student Profile{% endblock %}
+
+{% block content %}
+
+<a href="{{ url_for('students') }}" class="flex items-center gap-8 text-secondary" style="font-size:13.5px;margin-bottom:18px;width:fit-content;">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+  Back to Students
+</a>
+
+<div class="card stagger-in" style="--i:0;padding:28px;margin-bottom:20px;">
+  <div class="flex items-center gap-16" style="flex-wrap:wrap;">
+    <div class="avatar" style="width:64px;height:64px;font-size:22px;background:var(--grad-primary);">{{ student.name[0]|upper }}</div>
+    <div style="flex:1;min-width:200px;">
+      <h2 style="font-size:20px;">{{ student.name }}</h2>
+      <div class="text-muted font-mono" style="font-size:13px;margin-top:2px;">{{ student.student_code }}</div>
+    </div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;">
+      <div>
+        <div class="text-muted" style="font-size:11.5px;">EMAIL</div>
+        <div style="font-size:13.5px;margin-top:2px;">{{ student.email }}</div>
+      </div>
+      <div>
+        <div class="text-muted" style="font-size:11.5px;">PHONE</div>
+        <div style="font-size:13.5px;margin-top:2px;">{{ student.phone or '—' }}</div>
+      </div>
+      <div>
+        <div class="text-muted" style="font-size:11.5px;">COURSE</div>
+        <div style="font-size:13.5px;margin-top:2px;">{{ student.course or '—' }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:20px;">
+  <div class="card stagger-in" style="--i:1;padding:20px;">
+    <div class="text-muted" style="font-size:12px;">Currently Issued</div>
+    <div style="font-family:var(--font-display);font-size:24px;font-weight:700;margin-top:4px;">{{ issued_count }}</div>
+  </div>
+  <div class="card stagger-in" style="--i:2;padding:20px;">
+    <div class="text-muted" style="font-size:12px;">Returned</div>
+    <div style="font-family:var(--font-display);font-size:24px;font-weight:700;margin-top:4px;">{{ returned_count }}</div>
+  </div>
+  <div class="card stagger-in" style="--i:3;padding:20px;">
+    <div class="text-muted" style="font-size:12px;">Total Fine Paid</div>
+    <div style="font-family:var(--font-display);font-size:24px;font-weight:700;margin-top:4px;color:{{ 'var(--coral)' if total_fine > 0 else 'var(--text-primary)' }};">₹{{ total_fine }}</div>
+  </div>
+</div>
+
+<div class="card stagger-in" style="--i:4;">
+  <div style="padding:20px 24px 0;">
+    <h3 style="font-size:15px;margin-bottom:16px;">Transaction History</h3>
+  </div>
+  <div class="table-wrap" style="border:none;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Book</th>
+          <th>Issue Date</th>
+          <th>Due Date</th>
+          <th>Return Date</th>
+          <th>Status</th>
+          <th>Fine</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if history %}
+          {% for h in history %}
+          <tr class="row-in" style="--i:{{ loop.index0 }}">
+            <td>
+              <div style="font-weight:600;font-size:13.5px;">{{ h.book_title }}</div>
+              <div class="text-muted" style="font-size:12px;">{{ h.book_author }}</div>
+            </td>
+            <td style="font-size:13px;">{{ h.issue_date }}</td>
+            <td style="font-size:13px;">{{ h.due_date }}</td>
+            <td style="font-size:13px;">{{ h.return_date or '—' }}</td>
+            <td>
+              {% if h.display_status == 'returned' %}
+                <span class="badge badge-success"><span class="badge-dot"></span>Returned</span>
+              {% elif h.display_status == 'overdue' %}
+                <span class="badge badge-danger"><span class="badge-dot"></span>Overdue</span>
+              {% else %}
+                <span class="badge badge-info"><span class="badge-dot"></span>Issued</span>
+              {% endif %}
+            </td>
+            <td style="font-size:13px;{{ 'color:var(--coral);font-weight:600;' if h.fine_amount and h.fine_amount > 0 else '' }}">
+              {{ '₹' + h.fine_amount|string if h.fine_amount else '₹0' }}
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="6">
+            <div class="empty-state">
+              <div class="empty-state-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              </div>
+              <h3>No transactions yet</h3>
+              <p>This student hasn't issued any books.</p>
+            </div>
+          </td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
