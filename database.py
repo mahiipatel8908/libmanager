@@ -12,10 +12,17 @@ Why this file exists:
 
 import sqlite3
 import os
+import tempfile
 
 # Path to the actual .db file on disk. Stored inside instance/ which is the
 # Flask convention for files that shouldn't be part of your source code.
-DB_PATH = os.path.join(os.path.dirname(__file__), "instance", "library.db")
+LOCAL_DB_PATH = os.path.join(os.path.dirname(__file__), "instance", "library.db")
+DB_PATH = os.environ.get(
+    "LIBRARY_DB_PATH",
+    os.path.join(tempfile.gettempdir(), "library.db")
+    if os.environ.get("VERCEL")
+    else LOCAL_DB_PATH,
+)
 SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "schema.sql")
 REQUIRED_TABLES = {"users", "books", "students", "transactions", "settings"}
 
