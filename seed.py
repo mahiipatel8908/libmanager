@@ -2,7 +2,6 @@
 seed.py
 -------
 Optional script to populate the database with:
-- one admin login (username: admin / password: admin123)
 - a handful of sample books and students
 
 This is REAL data written into SQLite (not hardcoded UI) — it just exists
@@ -14,23 +13,7 @@ Run it with:
 Safe to run multiple times — it checks before inserting duplicates.
 """
 
-from werkzeug.security import generate_password_hash
 import database
-
-
-def seed_admin(conn):
-    existing = conn.execute(
-        "SELECT id FROM users WHERE username = ?", ("admin",)
-    ).fetchone()
-    if existing:
-        print("Admin user already exists — skipping.")
-        return
-    conn.execute(
-        "INSERT INTO users (username, password_hash, full_name) VALUES (?, ?, ?)",
-        ("admin", generate_password_hash("admin123"), "Library Admin")
-    )
-    print("Created admin user -> username: admin | password: admin123")
-    print("IMPORTANT: change this password later in Settings.")
 
 
 def seed_books(conn):
@@ -84,7 +67,6 @@ if __name__ == "__main__":
         database.init_db()
 
     conn = database.get_db_connection()
-    seed_admin(conn)
     seed_books(conn)
     seed_students(conn)
     conn.commit()

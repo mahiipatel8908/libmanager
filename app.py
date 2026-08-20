@@ -6,6 +6,9 @@ reports, settings. All data is real, stored in and read from SQLite.
 
 import csv
 import io
+import json
+import urllib.error
+import urllib.request
 from datetime import date, datetime, timedelta
 from functools import wraps
 
@@ -13,8 +16,6 @@ from flask import (
     Flask, render_template, request, redirect, url_for,
     session, jsonify, Response
 )
-from werkzeug.security import generate_password_hash, check_password_hash
-
 import database
 
 app = Flask(__name__)
@@ -69,6 +70,25 @@ def recompute_status(txn_row):
     return txn_row["status"]
 
 
+def verify_firebase_token(id_token):
+    """Verify a Firebase ID token using Firebase's public token endpoint."""
+    api_key = "AIzaSyDqpiZaK6Ik5V_u_xECktaLAl-DTqyOqR8"
+    endpoint = f"https://identitytoolkit.googleapis.com/v1/accounts:lookup?key={api_key}"
+    payload = json.dumps({"idToken": id_token}).encode("utf-8")
+    token_request = urllib.request.Request(
+        endpoint,
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(token_request, timeout=8) as response:
+            users = json.loads(response.read().decode("utf-8")).get("users", [])
+    except (urllib.error.HTTPError, urllib.error.URLError, json.JSONDecodeError):
+        return None
+    return users[0] if users else None
+
+
 # =================================================================
 # AUTH
 # =================================================================
@@ -79,21 +99,23 @@ def login():
             return redirect(url_for("dashboard"))
         return render_template("login.html")
 
-    username = request.form.get("username", "").strip()
-    password = request.form.get("password", "")
-    user = database.query_db("SELECT * FROM users WHERE username = ?", (username,), one=True)
+    if not request.is_json:
+        return render_template("login.html", error="Please sign in with Firebase Authentication."), 401
 
-    if not user or not check_password_hash(user["password_hash"], password):
-        return render_template("login.html", error="Invalid username or password."), 401
+    data = request.get_json(silent=True) or {}
+    user = verify_firebase_token(data.get("id_token", ""))
+    if not user:
+        return jsonify({"error": "Invalid email or password."}), 401
 
-    session["user_id"] = user["id"]
-    session["username"] = user["username"]
-    session["full_name"] = user["full_name"]
-    if request.form.get("remember"):
+    email = user.get("email", "")
+    session["user_id"] = user.get("localId")
+    session["username"] = email
+    session["full_name"] = user.get("displayName") or email.split("@", 1)[0]
+    if data.get("remember"):
         session.permanent = True
 
     next_url = request.args.get("next") or url_for("dashboard")
-    return redirect(next_url)
+    return jsonify({"success": True, "redirect": next_url})
 
 
 @app.route("/logout")
@@ -153,7 +175,7 @@ def api_stats():
         SELECT t.id, t.status, t.issue_date, t.return_date, s.name as student_name,
                b.title as book_title
         FROM transactions t
-        JOIN students s ON t.student_id = s.id
+                return jsonify({"success": True, "redirect": next_url})
         JOIN books b ON t.book_id = b.id
         ORDER BY t.id DESC LIMIT 8
     """)
@@ -646,13 +668,6 @@ def settings_page():
                WHERE id=1""",
             (library_name, borrow_period, fine_per_day, admin_display_name)
         )
-
-        new_password = request.form.get("new_password", "").strip()
-        if new_password:
-            database.execute_db(
-                "UPDATE users SET password_hash=? WHERE id=?",
-                (generate_password_hash(new_password), session["user_id"])
-            )
 
         return redirect(url_for("settings_page", saved=1))
 

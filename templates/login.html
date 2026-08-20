@@ -116,11 +116,11 @@
     </div>
     {% endif %}
 
-    <form method="POST" id="login-form" action="{{ url_for('login') }}">
+    <form id="login-form" action="{{ url_for('login') }}">
       <div class="form-group">
-        <input type="text" name="username" id="username" class="form-input" placeholder=" " autocomplete="username" required>
+        <input type="email" name="email" id="email" class="form-input" placeholder=" " autocomplete="email" required>
         <svg class="form-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-        <label class="form-label" for="username">Username</label>
+        <label class="form-label" for="email">Email</label>
       </div>
 
       <div class="form-group" style="position:relative;">
@@ -145,7 +145,7 @@
       </button>
     </form>
 
-    <p class="demo-hint">demo login → admin / admin123</p>
+    <p class="demo-hint">Use your Firebase Authentication email and password.</p>
   </div>
 </div>
 
@@ -159,10 +159,40 @@
       : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/>';
   }
 
-  document.getElementById('login-form').addEventListener('submit', function () {
+  document.getElementById('login-form').addEventListener('submit', async function (event) {
+    event.preventDefault();
     const btn = document.getElementById('login-btn');
     btn.classList.add('is-loading');
     btn.disabled = true;
+    try {
+      const { signInWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+      const { user } = await signInWithEmailAndPassword(
+        window.firebaseAuth,
+        document.getElementById('email').value.trim(),
+        document.getElementById('password').value
+      );
+      const token = await user.getIdToken();
+      const response = await fetch('{{ url_for("login") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_token: token, remember: document.querySelector('[name="remember"]').checked })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Sign-in failed.');
+      window.location.assign(result.redirect || '/');
+    } catch (error) {
+      const message = document.querySelector('.login-error');
+      if (message) {
+        message.lastChild.textContent = error.message || 'Invalid email or password.';
+      } else {
+        const errorBox = document.createElement('div');
+        errorBox.className = 'login-error';
+        errorBox.textContent = error.message || 'Invalid email or password.';
+        document.querySelector('.login-card').insertBefore(errorBox, document.getElementById('login-form'));
+      }
+      btn.classList.remove('is-loading');
+      btn.disabled = false;
+    }
   });
 
   window.addEventListener('load', () => { if (window.lucide) lucide.createIcons(); });

@@ -24,7 +24,7 @@ DB_PATH = os.environ.get(
     else LOCAL_DB_PATH,
 )
 SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "schema.sql")
-REQUIRED_TABLES = {"users", "books", "students", "transactions", "settings"}
+REQUIRED_TABLES = {"books", "students", "transactions", "settings"}
 
 
 def get_db_connection():

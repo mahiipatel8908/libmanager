@@ -5,17 +5,7 @@
 DROP TABLE IF EXISTS transactions;
 DROP TABLE IF EXISTS students;
 DROP TABLE IF EXISTS books;
-DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS settings;
-
--- Admin login accounts
-CREATE TABLE users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    full_name TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 
 -- Books catalog
 CREATE TABLE books (

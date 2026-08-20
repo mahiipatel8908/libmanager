@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
@@ -14,9 +15,11 @@ const firebaseConfig = {
 };
 
 const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
 const database = getDatabase(firebaseApp);
 
 window.firebaseApp = firebaseApp;
+window.firebaseAuth = auth;
 window.firebaseDatabase = database;
 
 isSupported()
@@ -27,4 +30,4 @@ isSupported()
   })
   .catch(() => {});
 
-export { firebaseApp, database };
+export { firebaseApp, auth, database };

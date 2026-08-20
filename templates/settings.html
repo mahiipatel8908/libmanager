@@ -35,15 +35,11 @@
   <form method="POST" action="{{ url_for('settings_page') }}" id="settings-form">
     <div class="card stagger-in" style="--i:2;padding:26px;margin-bottom:20px;">
       <h3 style="font-size:15px;margin-bottom:4px;">Profile</h3>
-      <p class="text-muted" style="font-size:13px;margin-bottom:18px;">Your admin display name and password.</p>
+      <p class="text-muted" style="font-size:13px;margin-bottom:18px;">Your admin display name. Passwords are managed in Firebase Authentication.</p>
 
       <div class="form-group">
         <input type="text" name="admin_display_name" id="admin_display_name" class="form-input" placeholder=" " value="{{ admin_name }}" required>
         <label class="form-label">Admin Name</label>
-      </div>
-      <div class="form-group" style="margin-bottom:0;">
-        <input type="password" name="new_password" class="form-input" placeholder=" " autocomplete="new-password">
-        <label class="form-label">New Password (leave blank to keep current)</label>
       </div>
     </div>
 

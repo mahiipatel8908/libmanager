@@ -1,13 +1,13 @@
 # Library Management System
 
-Premium, animated, full-stack Library Management System built with Flask + SQLite.
+Premium, animated, full-stack Library Management System built with Flask and Firebase Authentication.
 IT Diploma minor project.
 
 ## Status: Fully functional — all core features complete
 
 Login/auth, dashboard with live charts, book & student CRUD, issue/return with
 automatic due dates and fines, transaction history, reports with CSV export,
-and settings — all backed by real SQLite data (no fake/hardcoded numbers).
+and settings — with Firebase Authentication for secure sign-in.
 
 ## Setup (VS Code / Terminal)
 
@@ -31,26 +31,30 @@ and settings — all backed by real SQLite data (no fake/hardcoded numbers).
    ```
    Type `yes` when prompted.
 
-5. **Add sample data** (optional but recommended so the app isn't empty)
+5. **Configure Firebase Authentication**
+   Enable the Email/Password provider in Firebase Console and create an account
+   under Authentication → Users. The login page uses that account's email and password.
+
+6. **Add sample data** (optional for local SQLite development)
    ```bash
    python seed.py
    ```
-   Creates login `admin` / `admin123`, 8 sample books, 4 sample students.
+   Creates 8 sample books and 4 sample students.
 
-6. **Run the app**
+7. **Run the app**
    ```bash
    python app.py
    ```
 
-7. **Open in browser**
+8. **Open in browser**
    ```
    http://127.0.0.1:5000
    ```
-   You'll be redirected to the login page. Sign in with `admin` / `admin123`.
+   You'll be redirected to the login page. Sign in with your Firebase email and password.
 
 ## Features
 
-- 🔐 Session-based login with hashed passwords
+- 🔐 Firebase Email/Password authentication with Flask sessions
 - 📊 Animated dashboard — live stat cards, doughnut/bar/line charts (Chart.js)
 - 📚 Book management — add/edit/delete/search/filter, modal forms
 - 👨‍🎓 Student management — full CRUD + individual profile pages with history
@@ -67,7 +71,7 @@ and settings — all backed by real SQLite data (no fake/hardcoded numbers).
 
 ```
 app.py              Flask routes (auth, books, students, issue/return, reports...)
-database.py         SQLite connection helpers
+database.py         Local data connection helpers
 schema.sql          Table definitions
 seed.py             Optional sample-data script
 templates/          Jinja2 templates (base.html = shared shell)
@@ -82,4 +86,4 @@ static/js/          main.js (shared) + per-page JS (books.js, students.js, dashb
 | `ModuleNotFoundError: No module named 'flask'` | Activate the venv, then `pip install -r requirements.txt` |
 | Page loads unstyled | Hard refresh (Ctrl+Shift+R) |
 | "Database is locked" | Close any other running instance of `app.py` first |
-| Login fails | Make sure you ran `python seed.py`, or check the username/password you created |
+| Login fails | Enable Firebase Email/Password authentication and use an account created in Firebase Console |
