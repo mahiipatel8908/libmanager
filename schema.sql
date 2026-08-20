@@ -2,10 +2,10 @@
 -- Library Management System - Database Schema
 -- ============================================
 
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS books;
-DROP TABLE IF EXISTS students;
 DROP TABLE IF EXISTS transactions;
+DROP TABLE IF EXISTS students;
+DROP TABLE IF EXISTS books;
+DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS settings;
 
 -- Admin login accounts

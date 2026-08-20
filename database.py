@@ -17,6 +17,7 @@ import os
 # Flask convention for files that shouldn't be part of your source code.
 DB_PATH = os.path.join(os.path.dirname(__file__), "instance", "library.db")
 SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "schema.sql")
+REQUIRED_TABLES = {"users", "books", "students", "transactions", "settings"}
 
 
 def get_db_connection():
@@ -49,8 +50,21 @@ def init_db():
 
 
 def db_exists():
-    """Check if the database file has already been created."""
-    return os.path.exists(DB_PATH)
+    """Check if the database file exists and contains the application schema."""
+    if not os.path.exists(DB_PATH):
+        return False
+
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        tables = {
+            row[0]
+            for row in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            )
+        }
+        return REQUIRED_TABLES.issubset(tables)
+    finally:
+        conn.close()
 
 
 def query_db(query, args=(), one=False):
