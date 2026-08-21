@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Page Not Found{% endblock %}
+{% block page_title %}Page Not Found{% endblock %}
+
+{% block content %}
+<div class="empty-state" style="padding:80px 20px;">
+  <div class="empty-state-icon" style="width:80px;height:80px;">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+  </div>
+  <h3 style="font-size:18px;">404 — Page not found</h3>
+  <p>The page you're looking for doesn't exist or may have been moved.</p>
+  <a href="/" class="btn btn-primary">Back to Dashboard</a>
+</div>
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Return Book{% endblock %}
+{% set active_page = 'return' %}
+{% block page_title %}Return Book{% endblock %}
+
+{% block content %}
+
+<div style="max-width:560px;">
+  <div class="card stagger-in" style="--i:0;padding:28px;">
+
+    {% if not active_issues %}
+    <div class="empty-state" style="padding:20px 10px 10px;">
+      <div class="empty-state-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+      </div>
+      <h3>No books currently issued</h3>
+      <p>All books are checked in. Nothing to return right now.</p>
+    </div>
+    {% else %}
+    <form id="return-form">
+      <div class="form-group" style="margin-bottom:24px;">
+        <select id="return-txn" class="form-input" required style="padding-left:14px;">
+          <option value="" disabled selected>Select issued book to return</option>
+          {% for t in active_issues %}
+          <option value="{{ t.id }}"
+            data-student="{{ t.student_name }}"
+            data-code="{{ t.student_code }}"
+            data-book="{{ t.book_title }}"
+            data-issue="{{ t.issue_date }}"
+            data-due="{{ t.due_date }}">
+            {{ t.book_title }} — {{ t.student_name }} ({{ t.student_code }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- ============ RETURN SUMMARY ============ -->
+      <div id="return-summary" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:20px;margin-bottom:22px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13.5px;margin-bottom:16px;">
+          <div><div class="text-muted" style="font-size:11px;">STUDENT</div><div id="r-student" style="margin-top:2px;font-weight:600;"></div></div>
+          <div><div class="text-muted" style="font-size:11px;">BOOK</div><div id="r-book" style="margin-top:2px;font-weight:600;"></div></div>
+          <div><div class="text-muted" style="font-size:11px;">ISSUE DATE</div><div id="r-issue" style="margin-top:2px;"></div></div>
+          <div><div class="text-muted" style="font-size:11px;">DUE DATE</div><div id="r-due" style="margin-top:2px;"></div></div>
+        </div>
+        <div id="r-fine-box" style="border-top:1px solid var(--border);padding-top:16px;display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div class="text-muted" style="font-size:11px;">RETURN DATE</div>
+            <div id="r-return-date" style="margin-top:2px;font-weight:600;"></div>
+          </div>
+          <div style="text-align:right;">
+            <div class="text-muted" style="font-size:11px;">FINE</div>
+            <div id="r-fine-amount" style="font-family:var(--font-display);font-size:24px;font-weight:700;margin-top:2px;"></div>
+          </div>
+        </div>
+        <div id="r-late-note" class="text-muted" style="font-size:12px;margin-top:8px;"></div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;" id="return-submit-btn" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+        <span class="btn-label">Confirm Return</span>
+        <span class="spinner"></span>
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const finePerDay = {{ fine_per_day }};
+
+  function updateReturnSummary() {
+    const sel = document.getElementById('return-txn');
+    const summary = document.getElementById('return-summary');
+    const submitBtn = document.getElementById('return-submit-btn');
+
+    if (!sel || !sel.value) {
+      if (summary) summary.style.display = 'none';
+      if (submitBtn) submitBtn.disabled = true;
+      return;
+    }
+
+    const opt = sel.options[sel.selectedIndex];
+    const dueDate = new Date(opt.dataset.due);
+    const returnDate = new Date();
+    const fmt = (d) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    const lateDays = Math.max(0, Math.floor((returnDate.setHours(0,0,0,0) - dueDate.setHours(0,0,0,0)) / 86400000));
+    const fine = lateDays * finePerDay;
+
+    document.getElementById('r-student').textContent = `${opt.dataset.student} (${opt.dataset.code})`;
+    document.getElementById('r-book').textContent = opt.dataset.book;
+    document.getElementById('r-issue').textContent = fmt(new Date(opt.dataset.issue));
+    document.getElementById('r-due').textContent = fmt(new Date(opt.dataset.due));
+    document.getElementById('r-return-date').textContent = fmt(new Date());
+    const fineEl = document.getElementById('r-fine-amount');
+    fineEl.textContent = `₹${fine}`;
+    fineEl.style.color = fine > 0 ? 'var(--coral)' : 'var(--mint)';
+
+    const noteEl = document.getElementById('r-late-note');
+    noteEl.textContent = lateDays > 0
+      ? `Returned ${lateDays} day${lateDays > 1 ? 's' : ''} late — ₹${finePerDay}/day fine applied.`
+      : 'Returned on time — no fine.';
+
+    summary.style.display = 'block';
+    submitBtn.disabled = false;
+  }
+
+  const returnSelect = document.getElementById('return-txn');
+  if (returnSelect) returnSelect.addEventListener('change', updateReturnSummary);
+
+  const returnForm = document.getElementById('return-form');
+  if (returnForm) {
+    returnForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const txnId = document.getElementById('return-txn').value;
+      if (!txnId) return;
+
+      const btn = document.getElementById('return-submit-btn');
+      setBtnLoading(btn, true);
+
+      fetch('/api/return', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transaction_id: txnId }),
+      })
+        .then(r => r.json().then(data => ({ ok: r.ok, data })))
+        .then(({ ok, data }) => {
+          setBtnLoading(btn, false);
+          if (!ok) {
+            showToast('error', 'Could not return book', data.error);
+            return;
+          }
+          const msg = data.fine > 0 ? `Fine of ₹${data.fine} recorded (${data.late_days} days late).` : 'Returned on time, no fine.';
+          queueToast('success', 'Book returned successfully', msg);
+          window.location.href = '/return';
+        })
+        .catch(() => {
+          setBtnLoading(btn, false);
+          showToast('error', 'Network error', 'Please try again.');
+        });
+    });
+  }
+</script>
+{% endblock %}

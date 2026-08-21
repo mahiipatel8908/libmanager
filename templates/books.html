@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Books{% endblock %}
+{% set active_page = 'books' %}
+{% block page_title %}Books{% endblock %}
+
+{% block content %}
+
+<div class="flex items-center justify-between gap-16" style="margin-bottom:22px;flex-wrap:wrap;">
+  <div class="flex items-center gap-12" style="flex:1;min-width:260px;">
+    <div class="form-group" style="margin-bottom:0;flex:1;max-width:320px;">
+      <input type="text" id="book-search" class="form-input" placeholder=" " style="padding-left:42px;">
+      <svg class="form-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <label class="form-label" for="book-search">Search title, author, ISBN...</label>
+    </div>
+    <select id="book-category-filter" class="form-input" style="width:auto;padding:13px 14px;">
+      <option value="">All categories</option>
+      {% for c in categories %}
+      <option value="{{ c }}">{{ c }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button class="btn btn-primary" onclick="openAddBookModal()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 5v14M5 12h14"/></svg>
+    <span class="btn-label">Add Book</span>
+    <span class="spinner"></span>
+  </button>
+</div>
+
+<div class="table-wrap card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Book</th>
+        <th>Category</th>
+        <th>ISBN</th>
+        <th>Copies</th>
+        <th>Status</th>
+        <th style="text-align:right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="books-tbody">
+      <!-- Filled by JS -->
+    </tbody>
+  </table>
+</div>
+
+<!-- ============ ADD/EDIT BOOK MODAL ============ -->
+<div class="modal-overlay" id="book-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="book-modal-title" style="font-size:16px;">Add Book</h3>
+      <button class="modal-close" onclick="closeModal('book-modal')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="book-form">
+        <input type="hidden" id="book-id">
+        <div class="form-group">
+          <input type="text" id="book-title" class="form-input" placeholder=" " required>
+          <label class="form-label">Book Title</label>
+        </div>
+        <div class="form-group">
+          <input type="text" id="book-author" class="form-input" placeholder=" " required>
+          <label class="form-label">Author</label>
+        </div>
+        <div class="form-group">
+          <select id="book-category" class="form-input" required style="padding-left:14px;">
+            <option value="" disabled selected>Select category</option>
+            {% for c in categories %}
+            <option value="{{ c }}">{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <input type="text" id="book-isbn" class="form-input" placeholder=" ">
+          <label class="form-label">ISBN (optional)</label>
+        </div>
+        <div class="form-group">
+          <input type="text" id="book-publisher" class="form-input" placeholder=" ">
+          <label class="form-label">Publisher</label>
+        </div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <input type="number" id="book-copies" class="form-input" placeholder=" " min="1" value="1" required>
+          <label class="form-label">Total Copies</label>
+        </div>
+        <div id="book-form-error" class="login-error" style="display:none;margin-top:10px;"></div>
+        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:14px;" id="book-submit-btn">
+          <span class="btn-label">Save Book</span>
+          <span class="spinner"></span>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ============ VIEW BOOK MODAL ============ -->
+<div class="modal-overlay" id="view-book-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 style="font-size:16px;">Book Details</h3>
+      <button class="modal-close" onclick="closeModal('view-book-modal')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="view-book-body"></div>
+  </div>
+</div>
+
+<!-- ============ DELETE CONFIRM MODAL ============ -->
+<div class="modal-overlay" id="delete-book-modal">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-body" style="text-align:center;padding-top:32px;">
+      <div style="width:52px;height:52px;border-radius:50%;background:rgba(239,68,68,0.12);color:var(--coral);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+      </div>
+      <h3 style="font-size:16px;margin-bottom:6px;">Delete this book?</h3>
+      <p class="text-secondary" style="font-size:13.5px;margin-bottom:22px;">This action can't be undone.</p>
+      <div class="flex gap-12">
+        <button class="btn btn-secondary" style="flex:1;" onclick="closeModal('delete-book-modal')">Cancel</button>
+        <button class="btn btn-danger" style="flex:1;" id="confirm-delete-book-btn">
+          <span class="btn-label">Delete</span>
+          <span class="spinner"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/books.js') }}"></script>
+{% endblock %}

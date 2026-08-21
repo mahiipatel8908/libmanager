@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Issue Book{% endblock %}
+{% set active_page = 'issue' %}
+{% block page_title %}Issue Book{% endblock %}
+
+{% block content %}
+
+<div style="max-width:560px;">
+  <div class="card stagger-in" style="--i:0;padding:28px;">
+    <form id="issue-form">
+      <div class="form-group">
+        <select id="issue-student" class="form-input" required style="padding-left:14px;">
+          <option value="" disabled selected>Select student</option>
+          {% for s in students %}
+          <option value="{{ s.id }}" data-name="{{ s.name }}" data-code="{{ s.student_code }}">{{ s.name }} ({{ s.student_code }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom:24px;">
+        <select id="issue-book" class="form-input" required style="padding-left:14px;">
+          <option value="" disabled selected>Select book</option>
+          {% for b in books %}
+          <option value="{{ b.id }}" data-title="{{ b.title }}" data-author="{{ b.author }}" data-available="{{ b.available_copies }}">{{ b.title }} — {{ b.available_copies }} available</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {% if not books %}
+      <div class="login-error" style="margin-bottom:20px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        No books currently have available copies.
+      </div>
+      {% endif %}
+
+      <!-- ============ SUMMARY CARD (shown once both selected) ============ -->
+      <div id="issue-summary" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:20px;margin-bottom:22px;">
+        <div class="flex items-center gap-8" style="margin-bottom:14px;color:var(--indigo);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+          <span style="font-weight:600;font-size:13px;">Confirm Issue Details</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13.5px;">
+          <div><div class="text-muted" style="font-size:11px;">STUDENT</div><div id="summary-student" style="margin-top:2px;font-weight:600;"></div></div>
+          <div><div class="text-muted" style="font-size:11px;">BOOK</div><div id="summary-book" style="margin-top:2px;font-weight:600;"></div></div>
+          <div><div class="text-muted" style="font-size:11px;">ISSUE DATE</div><div id="summary-issue-date" style="margin-top:2px;"></div></div>
+          <div><div class="text-muted" style="font-size:11px;">DUE DATE</div><div id="summary-due-date" style="margin-top:2px;color:var(--amber);font-weight:600;"></div></div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;" id="issue-submit-btn" {{ 'disabled' if not books }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+        <span class="btn-label">Confirm Issue</span>
+        <span class="spinner"></span>
+      </button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const borrowPeriodDays = {{ borrow_period_days }};
+
+  function updateSummary() {
+    const studentSel = document.getElementById('issue-student');
+    const bookSel = document.getElementById('issue-book');
+    const summary = document.getElementById('issue-summary');
+
+    if (!studentSel.value || !bookSel.value) {
+      summary.style.display = 'none';
+      return;
+    }
+
+    const studentOpt = studentSel.options[studentSel.selectedIndex];
+    const bookOpt = bookSel.options[bookSel.selectedIndex];
+
+    const issueDate = new Date();
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + borrowPeriodDays);
+
+    const fmt = (d) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    document.getElementById('summary-student').textContent = studentOpt.dataset.name;
+    document.getElementById('summary-book').textContent = bookOpt.dataset.title;
+    document.getElementById('summary-issue-date').textContent = fmt(issueDate);
+    document.getElementById('summary-due-date').textContent = fmt(dueDate);
+    summary.style.display = 'block';
+  }
+
+  document.getElementById('issue-student').addEventListener('change', updateSummary);
+  document.getElementById('issue-book').addEventListener('change', updateSummary);
+
+  document.getElementById('issue-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const studentId = document.getElementById('issue-student').value;
+    const bookId = document.getElementById('issue-book').value;
+    if (!studentId || !bookId) return;
+
+    const btn = document.getElementById('issue-submit-btn');
+    setBtnLoading(btn, true);
+
+    fetch('/api/issue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ student_id: studentId, book_id: bookId }),
+    })
+      .then(r => r.json().then(data => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => {
+        setBtnLoading(btn, false);
+        if (!ok) {
+          showToast('error', 'Could not issue book', data.error);
+          return;
+        }
+        queueToast('success', 'Book issued successfully', `${data.book_title} → ${data.student_name}, due ${data.due_date}`);
+        window.location.href = '/issue';
+      })
+      .catch(() => {
+        setBtnLoading(btn, false);
+        showToast('error', 'Network error', 'Please try again.');
+      });
+  });
+</script>
+{% endblock %}
